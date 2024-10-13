@@ -2,17 +2,17 @@ name: Detect and Update Repo Structure
 
 on:
   schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:      # Allows manual triggering of the workflow
   push:
     branches:
-      - main
+      - main              # Runs on pushes to the main branch
 
 jobs:
   detect-and-update-structure:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write      # Required to push changes back to the repository
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.12
+          python-version: '3.12'  # Ensure this version is supported. Try '3.11' if issues occur.
 
       - name: Install dependencies
         run: |
@@ -29,17 +29,17 @@ jobs:
 
       - name: Run update script
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python .github/scripts/update_structure.py
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python .github/scripts/update_structure.py  # Ensure this script exists and runs correctly
 
-      - name: Commit and push if changed
+      - name: Commit and push changes if repo structure updated
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git add .
-          git diff --quiet && git diff --staged --quiet || (
-            git commit -m "Update repo structure" && 
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PriyaGhosal/BuddyTrail.git
-          )
+          if ! git diff --cached --exit-code; then
+            git commit -m "Update repo structure"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/<your-username>/<your-repo-name>.git
+          fi
